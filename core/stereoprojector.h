@@ -12,13 +12,13 @@ class StereoProjector: public Projector {
         virtual QPointF normal2det(const Vec3D&, bool* b=NULL) const;
         virtual Vec3D det2normal(const QPointF&, bool* b=NULL) const;
         
-        virtual QString configName();
         virtual QString projectorName();
         virtual QString displayName();
         //virtual double TTmax() const;
         virtual void projector2xml(QXmlStreamWriter&);
 //        virtual void loadFromXML(QXmlStreamReader&);
     public slots:
+        virtual QWidget* configWidget();
         virtual void decorateScene();
         void setDetOrientation(const Mat3D& M);
     protected:

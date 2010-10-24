@@ -235,8 +235,9 @@ void LauePlaneProjector::updatePBPos() {
     }
 }
 
-QString LauePlaneProjector::configName() {
-    return QString("LauePlaneCfg");
+QWidget* LauePlaneProjector::configWidget() {
+  //FIXME: Implement
+  return new QWidget();
 }
 
 QString LauePlaneProjector::projectorName() {

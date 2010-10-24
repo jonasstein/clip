@@ -13,7 +13,7 @@ class LauePlaneProjector: public Projector {
         virtual QPointF normal2det(const Vec3D&, bool* b=NULL) const;
         virtual Vec3D det2normal(const QPointF&, bool* b=NULL) const;
     
-        virtual QString configName();
+        virtual QWidget* configWidget();
         virtual QString projectorName();
         virtual QString displayName();
         double dist() const;

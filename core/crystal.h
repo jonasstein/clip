@@ -5,7 +5,7 @@
 #include <QMetaType>
 #include <tools/vec3D.h>
 #include <tools/mat3D.h>
-#include <core/objectstore.h>
+#include <tools/objectstore.h>
 #include <core/reflection.h>
 #include <core/fitobject.h>
 #include <core/spacegroup.h>

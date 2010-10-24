@@ -4,55 +4,60 @@
 #include <QWidget>
 #include <QRubberBand>
 #include <core/projector.h>
-
+#include <QCustomEvent>
+#include <tools/objectstore.h>
+#include <QActionGroup>
 
 namespace Ui {
-    class ProjectionPlane;
+  class ProjectionPlane;
 }
 
 class ProjectionPlane : public QWidget
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    explicit ProjectionPlane(Projector*, QWidget *parent = 0);
-    ~ProjectionPlane();
-    virtual void resizeEvent(QResizeEvent *);
-    virtual void mousePressEvent(QMouseEvent *);
-    virtual void mouseMoveEvent(QMouseEvent *);
-    virtual void mouseReleaseEvent(QMouseEvent *);
+  explicit ProjectionPlane(Projector*, QWidget *parent = 0);
+  ~ProjectionPlane();
+  virtual void resizeEvent(QResizeEvent *);
+  virtual void mousePressEvent(QMouseEvent *);
+  virtual void mouseMoveEvent(QMouseEvent *);
+  virtual void mouseReleaseEvent(QMouseEvent *);
 
-    virtual void dragEnterEvent(QDragEnterEvent *);
-    virtual void dropEvent(QDropEvent *);
+  virtual void dragEnterEvent(QDragEnterEvent *);
+  virtual void dropEvent(QDropEvent *);
+signals:
+  void showConfig(QWidget*);
 protected:
-    QRectF zoomSceneRect();
-    enum MouseMode {
-        MouseZoom,
-        MousePan,
-        MouseRotate
-    };
-    MouseMode mouseMode;
+  QRectF zoomSceneRect();
+  enum MouseMode {
+    MouseZoom,
+    MousePan,
+    MouseRotate
+  };
+  MouseMode mouseMode;
 
 protected slots:
-    void slotActivateZoom();
-    void slotActivatePan();
-    void slotActivateRotate();
-    void slotUpdateFPS();
-    void resizeView();
-    void slotLoadCrystalData();
-    //FIXME: Only for debuging
-    void slotRandomRotation();
-
+  void slotChangeMouseMode(int);
+  void slotUpdateFPS();
+  void resizeView();
+  void slotLoadCrystalData();
+  //FIXME: Only for debuging
+  void slotRandomRotation();
+  void slotOpenProjectorConfig();
 private:
-    Ui::ProjectionPlane *ui;
-    Projector* projector;
+  Ui::ProjectionPlane *ui;
+  Projector* projector;
+  QPointer<QWidget> projectorConfig;
 
-    QPointF mousePressOrigin;
-    QPointF lastMousePosition;
-    QRubberBand* zoomRubber;
+  QPointF mousePressOrigin;
+  QPointF lastMousePosition;
+  QRubberBand* zoomRubber;
 
-    QList<QRectF> zoomSteps;
+  QList<QRectF> zoomSteps;
 
+  static QList<ProjectionPlane*> allPlanes;
+  QActionGroup* mouseModeGroup;
 };
 
 #endif // PROJECTIONPLANE_H

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <QtGui/QGraphicsEllipseItem>
 #include <iostream>
+#include <ui/stereocfg.h>
 
 using namespace std;
 
@@ -116,8 +117,9 @@ void StereoProjector::decorateScene() {
   decorationItems.append(scene.addLine(0.0, -1.0, 0.0, 1.0, QPen(Qt::gray)));
 }
 
-QString StereoProjector::configName() {
-  return QString("StereoCfg");
+QWidget* StereoProjector::configWidget() {
+  //FIXME: Implement
+  return new StereoCfg(this);
 }
 
 QString StereoProjector::projectorName() {

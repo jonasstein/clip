@@ -2,25 +2,31 @@
 #define CLIP_H
 
 #include <QMainWindow>
+#include <core/projector.h>
 
 namespace Ui {
-    class Clip;
+  class Clip;
 }
 
 class Clip : public QMainWindow
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    explicit Clip(QWidget *parent = 0);
-    ~Clip();
+  explicit Clip(QWidget *parent = 0);
+  ~Clip();
 
 public slots:
-    void on_actionNew_Crystal_triggered(bool);
-    void on_actionNew_Projection_triggered(bool);
+  void on_newCrystal_triggered();
+  void on_newLaue_triggered();
+  void on_newStereo_triggered();
+  void addMdiWindow(QWidget* w);
 
+protected:
+  Projector* connectToLastCrystal(Projector*);
+  void addProjector(Projector*);
 private:
-    Ui::Clip *ui;
+  Ui::Clip *ui;
 };
 
 #endif // CLIP_H

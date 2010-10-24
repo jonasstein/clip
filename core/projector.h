@@ -17,7 +17,7 @@
 #include <QWaitCondition>
 #include <QSemaphore>
 #include <QThread>
-
+#include <QWidget>
 
 class Projector: public QObject, public FitObject {
     Q_OBJECT
@@ -41,7 +41,6 @@ class Projector: public QObject, public FitObject {
         
         QGraphicsScene* getScene();
         Crystal* getCrystal();
-        virtual QString configName()=0;
         virtual QString projectorName()=0;
         virtual QString displayName()=0;
         
@@ -64,6 +63,7 @@ class Projector: public QObject, public FitObject {
         virtual void loadFromXML(QXmlStreamReader&);
 
     public slots:
+        virtual QWidget* configWidget()=0;
         void connectToCrystal(Crystal *);
         void setWavevectors(double Qmin, double Qmax);
         void reflectionsUpdated();
@@ -80,7 +80,6 @@ class Projector: public QObject, public FitObject {
         // For speedup of fitting...
         void enableProjection(bool b=true);
         
-
         void addMarker(const QPointF& p);
         void delMarkerNear(const QPointF& p);
         
@@ -96,7 +95,6 @@ class Projector: public QObject, public FitObject {
         void projectionRectPosChanged();
         void projectionRectSizeChanged();
         void imgTransformUpdated();
-
     protected:
         virtual bool project(const Reflection &r, QPointF &point)=0;    
         virtual bool parseXMLElement(QXmlStreamReader&);

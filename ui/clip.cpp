@@ -12,28 +12,44 @@ Clip::Clip(QWidget *parent) :
 {
   ui->setupUi(this);
 
-  on_actionNew_Crystal_triggered(true);
-  on_actionNew_Projection_triggered(true);
+  on_newCrystal_triggered();
+  on_newLaue_triggered();
+  on_newStereo_triggered();
 
 
 }
 
-Clip::~Clip()
-{
+Clip::~Clip() {
   delete ui;
 }
 
 
-void Clip::on_actionNew_Crystal_triggered(bool) {
-  QMdiSubWindow* w = ui->mdiArea->addSubWindow(new CrystalDisplay(this));
-  w->setAttribute(Qt::WA_DeleteOnClose);
-  w->show();
+void Clip::on_newCrystal_triggered() {
+  addMdiWindow(new CrystalDisplay(this));
 }
 
 
-void Clip::on_actionNew_Projection_triggered(bool) {
-  Projector* p = new StereoProjector(this);
-  //Projector* p = new LauePlaneProjector(this);
+void Clip::on_newLaue_triggered() {
+  addProjector(new LauePlaneProjector(this));
+}
+
+void Clip::on_newStereo_triggered() {
+  addProjector(new StereoProjector(this));
+}
+
+void Clip::addProjector(Projector* p) {
+  ProjectionPlane* pp = new ProjectionPlane(connectToLastCrystal(p), this);
+  connect(pp, SIGNAL(showConfig(QWidget*)), this, SLOT(addMdiWindow(QWidget*)));
+  addMdiWindow(pp);
+}
+
+void Clip::addMdiWindow(QWidget* w) {
+  QMdiSubWindow* m = ui->mdiArea->addSubWindow(w);
+  m->setAttribute(Qt::WA_DeleteOnClose);
+  m->show();
+}
+
+Projector* Clip::connectToLastCrystal(Projector *p) {
   QList<QMdiSubWindow*> mdiWindows = ui->mdiArea->subWindowList(QMdiArea::StackingOrder);
   while (!mdiWindows.empty()) {
     QMdiSubWindow* window = mdiWindows.takeLast();
@@ -43,8 +59,5 @@ void Clip::on_actionNew_Projection_triggered(bool) {
       break;
     }
   }
-
-  QMdiSubWindow* w = ui->mdiArea->addSubWindow(new ProjectionPlane(p, this));
-  w->setAttribute(Qt::WA_DeleteOnClose);
-  w->show();
+  return p;
 }

@@ -11,7 +11,6 @@
 #include <QThreadPool>
 #include <QtConcurrentMap>
 
-
 using namespace std;
 
 Projector::Projector(QObject *parent): QObject(parent), FitObject(), decorationItems(), textMarkerItems(), markerItems(), crystal(), scene(this), imgGroup() {
