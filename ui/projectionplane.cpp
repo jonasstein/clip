@@ -11,6 +11,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QLabel>
+#include <QMenu>
+#include <QCursor>
 
 #include "ui/clip.h"
 #include "ui/imagetoolbox.h"
@@ -116,6 +118,7 @@ void ProjectionPlane::resizeEvent(QResizeEvent *e) {
 
 
 void ProjectionPlane::mousePressEvent(QMouseEvent *e) {
+  inMousePress = true;
   mousePressOrigin = ui->view->mapToScene(ui->view->viewport()->mapFromGlobal(e->globalPos()));
   if (e->buttons()==Qt::LeftButton) {
     if (ui->zoomAction->isChecked()) {
@@ -128,16 +131,7 @@ void ProjectionPlane::mousePressEvent(QMouseEvent *e) {
       zoomRubber->show();
     }
   } else if (e->buttons()==Qt::RightButton) {
-
-    if (projector->spotMarkers().delAt(mousePressOrigin)) {
-    } else if (projector->zoneMarkers().delAt(mousePressOrigin)) {
-    } else if (projector->rulers().delAt(mousePressOrigin)) {
-    } else if (projector->infoItems().delAt(mousePressOrigin)) {
-    } else {
-      if (zoomSteps.size()>0)
-        zoomSteps.removeLast();
-      resizeView();
-    }
+    QTimer::singleShot(QApplication::startDragTime(), this, SLOT(slotContextMenu()));
   }
   lastMousePosition = mousePressOrigin;
 }
@@ -193,8 +187,6 @@ void ProjectionPlane::mouseMoveEvent(QMouseEvent *e) {
           a*=-1;
         projector->addRotation(ax, a);
         emit rotationFromProjector(180.0*M_1_PI*a);
-        //self.emit(QtCore.SIGNAL('projectorAddedRotation(double)'), a)
-        //if self.doProcessEvent:
         qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
       }
     }
@@ -205,7 +197,7 @@ void ProjectionPlane::mouseMoveEvent(QMouseEvent *e) {
 void ProjectionPlane::mouseReleaseEvent(QMouseEvent *e) {
   QPointF p = ui->view->mapToScene(ui->view->viewport()->mapFromGlobal(e->globalPos()));
   QPointF dp = (p-mousePressOrigin);
-  bool largeMove = hypot(dp.x(), dp.y())>projector->getSpotSize();
+  bool largeMove = hypot(dp.x(), dp.y()) > projector->getSpotSize();
   if (e->button()==Qt::LeftButton) {
     if (ui->zoomAction->isChecked()) {
       if (largeMove) zoomSteps.append(QRectF(mousePressOrigin, p).normalized());
@@ -228,9 +220,20 @@ void ProjectionPlane::mouseReleaseEvent(QMouseEvent *e) {
         projector->addSpotMarker(p);
       }
     }
+  } else if (e->button()==Qt::RightButton) {
+    if (projector->spotMarkers().delAt(p)) {
+    } else if (projector->zoneMarkers().delAt(p)) {
+    } else if (projector->rulers().delAt(p)) {
+    } else if (projector->infoItems().delAt(p)) {
+    } else {
+      if (zoomSteps.size()>0)
+        zoomSteps.removeLast();
+      resizeView();
+    }
   }
   //ui->view->setDragMode(QGraphicsView::NoDrag);
   lastMousePosition = p;
+  inMousePress = e->buttons() != Qt::NoButton;
 }
 
 
@@ -368,3 +371,55 @@ void ProjectionPlane::imageLoaded(LaueImage *img) {
 void ProjectionPlane::imageClosed() {
   setWindowTitle(projector->displayName());
 }
+
+void ProjectionPlane::slotContextMenu() {
+  if (inMousePress) {
+    QMenu context(this);
+
+    context.addAction("Set Rotation Axis on nearest Reflection", this, SLOT(slotContextSetRotationAxisOnSpot()));
+    context.addAction("Set Rotation Axis exactly here", this, SLOT(slotContextSetRotationAxis()));
+    context.addAction("Clear all Markers", this, SLOT(slotContextClearAll()));
+    context.addAction("Clear all Spot Markers", this, SLOT(slotContextClearSpotMarkers()));
+    context.addAction("Clear all Zone Markers", this, SLOT(slotContextClearZoneMarkers()));
+    context.addAction("Clear all Rulers", this, SLOT(slotContextClearRulers()));
+    context.exec(QCursor::pos());
+  }
+}
+
+void ProjectionPlane::slotContextSetRotationAxis() {
+  Crystal* crystal = projector->getCrystal();
+  if (crystal) {
+    bool ok;
+    Vec3D normal = projector->det2normal(lastMousePosition, ok);
+    if (ok) crystal->setRotationAxis(normal, Crystal::LabSystem);
+  }
+}
+
+void ProjectionPlane::slotContextSetRotationAxisOnSpot() {
+  Crystal* crystal = projector->getCrystal();
+  if (crystal) {
+    bool ok;
+    Vec3D normal = projector->det2normal(lastMousePosition, ok);
+    // TODO: really get closest connection
+    if (ok) crystal->setRotationAxis(crystal->getClosestReflection(normal).hkl().toType<double>(), Crystal::ReziprocalSpace);
+  }
+}
+
+void ProjectionPlane::slotContextClearSpotMarkers() {
+  projector->spotMarkers().clear();
+}
+
+void ProjectionPlane::slotContextClearZoneMarkers() {
+  projector->zoneMarkers().clear();
+}
+
+void ProjectionPlane::slotContextClearRulers() {
+  projector->rulers().clear();
+}
+
+void ProjectionPlane::slotContextClearAll() {
+  slotContextClearSpotMarkers();
+  slotContextClearZoneMarkers();
+  slotContextClearRulers();
+}
+

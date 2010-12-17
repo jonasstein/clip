@@ -12,6 +12,8 @@ public:
   int h;
   int k;
   int l;
+
+  TVec3D<int> hkl() { return TVec3D<int>(h,k,l); }
   
   //h^2+k^2+l^2
   int hklSqSum;

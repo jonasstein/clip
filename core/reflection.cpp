@@ -24,4 +24,3 @@ QString Reflection::toText() const {
 QString Reflection::toHtml() const {
   return hkl2text(h,k,l);
 }
-

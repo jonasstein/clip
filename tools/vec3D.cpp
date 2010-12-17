@@ -140,7 +140,7 @@ template <typename T> bool TVec3D<T>::operator==(const TVec3D<T>& v)  const {
 }
 
 template <typename T> bool TVec3D<T>::operator!=(const TVec3D<T>& v)  const {
-  return ((*this)(0)!=v(0)) && ((*this)(1)!=v(1)) && ((*this)(2)!=v(2));
+  return ((*this)(0)!=v(0)) || ((*this)(1)!=v(1)) || ((*this)(2)!=v(2));
 }
 
 template <typename T> bool TVec3D<T>::isNull()  const {

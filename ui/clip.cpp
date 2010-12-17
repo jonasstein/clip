@@ -25,6 +25,7 @@ Clip::Clip(QWidget *parent) :
 
   addActions();
   connect(ui->menuWindows, SIGNAL(aboutToShow()), this, SLOT(slotUpdateWindowMenu()));
+  connect(ui->mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SIGNAL(windowChanged()));
 
   on_newCrystal_triggered();
   on_newLaue_triggered();

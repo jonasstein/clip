@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QSignalMapper>
 
+class Crystal;
+
 namespace Ui {
   class RotateCrystal;
 }
@@ -20,14 +22,17 @@ public slots:
   void addRotationAngle(double);
   void resetSum();
 private slots:
+  void on_axisEdit_textChanged(QString );
+  void on_axisChooser_currentIndexChanged(int index);
   void loadAxisFromCrystal();
-  void setRotationAxisToCrystal();
   void addRotation(int);
+  void windowChanged();
 
 private:
   Ui::RotateCrystal *ui;
   double angleSum;
   QSignalMapper buttonMapper;
+  Crystal* paramsLoadedFromCrystal;
 };
 
 #endif // ROTATECRYSTAL_H

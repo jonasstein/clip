@@ -27,6 +27,7 @@ private:
   static Clip* instance;
 signals:
   void projectorRotation(double);
+  void windowChanged();
 public slots:
   // Menu Slots
   void on_newCrystal_triggered();

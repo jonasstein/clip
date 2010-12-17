@@ -27,7 +27,7 @@ public:
 signals:
   void info(QString, int);
 public slots:
-  void slotUpdateOM();
+  void slotUpdateOrientationMatrix();
   void slotCellChanged();
   void slotRotationChanged();
   void slotSpacegroupChanged(QString);
@@ -45,6 +45,7 @@ private:
 
 private slots:
     void on_actionDrag_hovered();
+    void slotResizeOrientationMatrix();
 };
 
 #endif // CRYSTAL_H

@@ -425,7 +425,9 @@ QList<Projector*> Crystal::getConnectedProjectors() {
 }
 
 void Crystal::setRotationAxis(const Vec3D& axis, RotationAxisType type) {
+  cout << "setRA (" << axis(0) << " " << axis(1) << " " << axis(2) << ") " << type << endl;
   if ((axis!=rotationAxis) or (axisType!=type)) {
+    cout << "accept" << endl;
     rotationAxis=axis;
     axisType=type;
     emit rotationAxisChanged();

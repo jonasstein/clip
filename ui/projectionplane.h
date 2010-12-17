@@ -46,6 +46,13 @@ protected slots:
   void slotOpenResolutionCalc();
   void generateMousePositionInfo(QPointF);
   void generateEmptyMousePositionInfo();
+  void slotContextMenu();
+  void slotContextSetRotationAxis();
+  void slotContextSetRotationAxisOnSpot();
+  void slotContextClearSpotMarkers();
+  void slotContextClearZoneMarkers();
+  void slotContextClearRulers();
+  void slotContextClearAll();
   void imageLoaded(LaueImage*);
   void imageClosed();
 protected:
@@ -60,12 +67,11 @@ protected:
 
   QPointF mousePressOrigin;
   QPointF lastMousePosition;
+  bool inMousePress;
+
   QRubberBand* zoomRubber;
-
   QList<QRectF> zoomSteps;
-
   static QList<ProjectionPlane*> allPlanes;
-
   QString lastImageOpenDir;
 
 private slots:

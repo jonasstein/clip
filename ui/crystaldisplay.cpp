@@ -5,6 +5,7 @@
 #include <QDrag>
 #include <QMimeData>
 #include <QMouseEvent>
+#include <QTimer>
 
 #include "tools/mat3D.h"
 #include "core/crystal.h"
@@ -19,8 +20,8 @@ CrystalDisplay::CrystalDisplay(QWidget *parent) :
   ui->setupUi(this);
 
   // Connect Signals of the crystal
-  connect(crystal, SIGNAL(orientationChanged()), this, SLOT(slotUpdateOM()));
-  connect(crystal, SIGNAL(cellChanged()), this, SLOT(slotUpdateOM()));
+  connect(crystal, SIGNAL(orientationChanged()), this, SLOT(slotUpdateOrientationMatrix()));
+  connect(crystal, SIGNAL(cellChanged()), this, SLOT(slotUpdateOrientationMatrix()));
   connect(crystal, SIGNAL(cellChanged()), this, SLOT(slotLoadCellFromCrystal()));
 
   //connect(crystal, SIGNAL(info(QString)), this, SIGNAL(info(QString)));
@@ -39,13 +40,16 @@ CrystalDisplay::CrystalDisplay(QWidget *parent) :
       ui->orientationMatrix->setItem(i,j, new QTableWidgetItem(""));
 
   // Load Orientation Matrix
-  slotUpdateOM();
+  slotUpdateOrientationMatrix();
 
   // Load Cell
   slotLoadCellFromCrystal();
 
   // Disable Inputs based on constrains
   slotSetSGConstrains();
+
+  // Resize Display as soon as we are visible
+  QTimer::singleShot(0, this, SLOT(slotResizeOrientationMatrix()));
 }
 
 CrystalDisplay::~CrystalDisplay()
@@ -56,6 +60,10 @@ CrystalDisplay::~CrystalDisplay()
 
 
 void CrystalDisplay::resizeEvent(QResizeEvent *) {
+  slotResizeOrientationMatrix();
+}
+
+void CrystalDisplay::slotResizeOrientationMatrix() {
   // Adjust Size of the Orientation Matrix Cells
   int w = ui->orientationMatrix->width()/3;
   int h = ui->orientationMatrix->height()/3;
@@ -70,7 +78,7 @@ QSize CrystalDisplay::sizeHint() const {
   return minimumSizeHint();
 }
 
-void CrystalDisplay::slotUpdateOM() {
+void CrystalDisplay::slotUpdateOrientationMatrix() {
   // Load rotationMatrix
   Mat3D OM = crystal->getRotationMatrix();
   // Multiply with unrotated Orientation Matrix
