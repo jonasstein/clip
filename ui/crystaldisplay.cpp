@@ -44,11 +44,8 @@ CrystalDisplay::CrystalDisplay(QWidget *parent) :
 
   connect(crystal->getSpacegroup(), SIGNAL(constrainsChanged()), this, SLOT(slotSetSGConstrains()));
 
-
-  // Init Orientation Matrix Elements
-  for (int i=0; i<3; i++)
-    for (int j=0; j<3; j++)
-      ui->orientationMatrix->setItem(i,j, new QTableWidgetItem(""));
+  ui->orientationMatrix->verticalHeader()->setResizeMode(QHeaderView::Stretch);
+  ui->orientationMatrix->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
 
   // Load Orientation Matrix
   slotUpdateOrientationMatrix();
@@ -59,8 +56,6 @@ CrystalDisplay::CrystalDisplay(QWidget *parent) :
   // Disable Inputs based on constrains
   slotSetSGConstrains();
 
-  // Resize Display as soon as we are visible
-  QTimer::singleShot(0, this, SLOT(slotResizeOrientationMatrix()));
 }
 
 CrystalDisplay::~CrystalDisplay()
@@ -69,25 +64,6 @@ CrystalDisplay::~CrystalDisplay()
   delete crystal;
 }
 
-
-void CrystalDisplay::resizeEvent(QResizeEvent *) {
-  slotResizeOrientationMatrix();
-  cout << "Size: " << width() << "x" << height() << " / " ;
-  if (QWidget* p = dynamic_cast<QWidget*>(parent())) {
-    cout << p->width() << "x" << p->height();
-  }
-  cout << endl;
-}
-
-void CrystalDisplay::slotResizeOrientationMatrix() {
-  // Adjust Size of the Orientation Matrix Cells
-  int w = ui->orientationMatrix->width()/3;
-  int h = ui->orientationMatrix->height()/3;
-  for (int i=0; i<3; i++) {
-    ui->orientationMatrix->setColumnWidth(i, w);
-    ui->orientationMatrix->setRowHeight(i, h);
-  }
-}
 
 QSize CrystalDisplay::sizeHint() const {
   // sizeHint results in a compact window

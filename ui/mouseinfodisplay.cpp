@@ -6,6 +6,9 @@ MouseInfoDisplay::MouseInfoDisplay(QWidget *parent) :
     ui(new Ui::MouseInfoDisplay)
 {
     ui->setupUi(this);
+    ui->angleTable->verticalHeader()->setDefaultSectionSize(fontMetrics().lineSpacing()+4);
+    ui->angleTable->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+    ui->angleTable->verticalHeader()->setResizeMode(QHeaderView::Stretch);
 }
 
 MouseInfoDisplay::~MouseInfoDisplay()
@@ -53,15 +56,10 @@ void MouseInfoDisplay::showMouseInfo(MousePositionInfo info) {
     Macro(ui->infoQ, r.Qscatter, r.normal.x()>1e-6);
     Macro(ui->info2T, 180.0-180.0*M_1_PI*acos(r.scatteredRay.x()), r.normal.x()>1e-6);
     Vec3D n = r.normal;
-    QList<QPair<QLineEdit*, double> > l;
-    l << qMakePair(ui->axX ,  n(0));
-    l << qMakePair(ui->axMX, -n(0));
-    l << qMakePair(ui->axY ,  n(1));
-    l << qMakePair(ui->axMY, -n(1));
-    l << qMakePair(ui->axZ ,  n(2));
-    l << qMakePair(ui->axMZ, -n(2));
-    QPair<QLineEdit*, double> pair;
-    foreach (pair, l) pair.first->setText(QString::number(180*M_1_PI*acos(qBound(-1.0, pair.second, 1.0)), 'f', 2));
+    for (int i=0; i<3; i++) {
+      ui->angleTable->item(i, 0)->setText(QString::number(180*M_1_PI*acos(qBound(-1.0, n(i), 1.0)), 'f', 2));
+      ui->angleTable->item(i, 1)->setText(QString::number(180*M_1_PI*acos(qBound(-1.0,-n(i), 1.0)), 'f', 2));
+    }
     QString diffOrders;
     foreach (int i, r.orders) {
       if ((2.0*info.detQMin<=i*r.Qscatter) && (i*r.Qscatter<=2.0*info.detQMax)) {

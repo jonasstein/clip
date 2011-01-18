@@ -84,6 +84,7 @@ ProjectionPlane* Clip::addProjector(Projector* p) {
   if (!p) return 0;
   ProjectionPlane* pp = new ProjectionPlane(connectToLastCrystal(p), this);
   connect(pp, SIGNAL(rotationFromProjector(double)), this, SIGNAL(projectorRotation(double)));
+  connect(pp, SIGNAL(mousePositionInfo(MousePositionInfo)), this, SIGNAL(mousePositionInfo(MousePositionInfo)));
   addMdiWindow(pp);
   return pp;
 }
@@ -225,11 +226,7 @@ void Clip::addActions() {
 
 void Clip::on_actionReflection_Info_triggered() {
   MouseInfoDisplay* info = new MouseInfoDisplay();
-  foreach (QMdiSubWindow* mdi, ui->mdiArea->subWindowList()) {
-    if (ProjectionPlane* pp = dynamic_cast<ProjectionPlane*>(mdi->widget())) {
-      connect(pp, SIGNAL(mousePositionInfo(MousePositionInfo)), info, SLOT(showMouseInfo(MousePositionInfo)));
-    }
-  }
+  connect(this, SIGNAL(mousePositionInfo(MousePositionInfo)), info, SLOT(showMouseInfo(MousePositionInfo)));
   addMdiWindow(info);
 }
 

@@ -4,10 +4,12 @@
 #include <QMainWindow>
 #include <QSignalMapper>
 
+#include "tools/mousepositioninfo.h"
 
 class Projector;
 class ProjectionPlane;
 class Crystal;
+class MousePositionInfo;
 
 namespace Ui {
   class Clip;
@@ -29,6 +31,7 @@ private:
 signals:
   void projectorRotation(double);
   void windowChanged();
+  void mousePositionInfo(MousePositionInfo);
 public slots:
   // Menu Slots
   void on_newCrystal_triggered();

@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QPointer>
 #include <QDomElement>
-
 #include "ui/hkltool.h"
 
 class Crystal;
@@ -24,8 +23,6 @@ public:
   void loadFromXML(QDomElement base);
   void saveToXML(QDomElement base);
   void loadDefault();
-
-  void resizeEvent(QResizeEvent *);
 
   QSize sizeHint() const;
 
@@ -57,7 +54,6 @@ private slots:
   void on_actionSave_triggered();
   void on_actionLoad_triggered();
   void on_actionDrag_hovered();
-  void slotResizeOrientationMatrix();
 };
 
 #endif // CRYSTAL_H
