@@ -61,24 +61,27 @@ int padTo(int value, int pad) {
 }
 
 DataProvider* BrukerProvider::Factory::getProvider(QString filename, QObject *parent) {
+  bool ok;
   QFile imgFile(filename);
 
   if (!imgFile.open(QFile::ReadOnly)) return NULL;
 
-
-  bool ok;
+  // Read header fields. Field #3 is HDRBLKS, read at least until this.
   int maxHeaderFields = 3;
   int headerSize = 0;
   QMap<QString, QVariant> headerData;
   for (int i=0; i<maxHeaderFields; i++) {
+    // Read one field
     QByteArray data = imgFile.read(80);
     QString headerfield(data);
+    // Split to 7 character key and 72 character value (omiting one colon)
     QString key = headerfield.left(7).simplified();
     QString value = headerfield.right(72).simplified();
     if (data[0]==char(0x1a) && data[1]==char(0x04)) {
       // padded -> indicates end of header
       break;
     } else if (key=="HDRBLKS") {
+      // If HDRBLKS is found, set headersize and maximal headerfields nr acordingly
       headerSize = 512*value.toInt();
       maxHeaderFields = headerSize/80;
     }
@@ -87,10 +90,15 @@ DataProvider* BrukerProvider::Factory::getProvider(QString filename, QObject *pa
       headerData.insert(key, QVariant(value.toInt(&ok)));
       if (!ok) return NULL;
     } else {
-      headerData.insert(key, QVariant(value));
+      if (headerData.contains(key)) {
+        headerData[key] = QVariant(headerData[key].toString() + " " + value);
+      } else {
+        headerData.insert(key, QVariant(value));
+      }
     }
   }
 
+  // Check, if all nesessary fields are present
   if ((headerSize==0) ||
       (!headerData.contains("FORMAT")) ||
       (!headerData.contains("NROWS")) ||
@@ -100,19 +108,19 @@ DataProvider* BrukerProvider::Factory::getProvider(QString filename, QObject *pa
       (!headerData.contains("NPIXELB")))
     return NULL;
 
+
+  QStringList byteCounts = headerData["NPIXELB"].toString().split(' ');
+  QStringList overflowNumbers = headerData["NOVERFL"].toString().split(' ');
+  if (byteCounts.size()<1) return NULL;
+
+  int bytesPerPixel = byteCounts.at(0).toInt(&ok);
+  if (!ok) return NULL;
   int rows = headerData["NROWS"].toInt(&ok);
   if (!ok) return NULL;
   int cols = headerData["NCOLS"].toInt(&ok);
   if (!ok) return NULL;
 
-
-  QStringList byteCounts = headerData["NPIXELB"].toString().split(' ');
-  QStringList overflowNumbers = headerData["NOVERFL"].toString().split(' ');
-
-  if (byteCounts.size()<1) return NULL;
-  int bytesPerPixel = byteCounts.at(0).toInt(&ok);
-  if (!ok) return NULL;
-
+  // Calculate the size of data, overflow and underflow tables.
   int dataSize = cols*rows*bytesPerPixel;
 
   int bytesPerUnderflow = 0;
@@ -123,12 +131,11 @@ DataProvider* BrukerProvider::Factory::getProvider(QString filename, QObject *pa
     if (!ok) return NULL;
 
     if (overflowNumbers.size()<1) return NULL;
-    // strangely sometimes zero...
-    numberUnderflow = qMax(overflowNumbers.at(0).toInt(&ok), 0);
+    numberUnderflow = overflowNumbers.at(0).toInt(&ok);
     if (!ok) return NULL;
   }
 
-  int underflowTableSize = padTo(bytesPerUnderflow * numberUnderflow, 16);
+  int underflowTableSize = padTo(bytesPerUnderflow * qMax(0, numberUnderflow), 16);
 
   int overflowTableSize = 0;
   if (headerData["FORMAT"].toInt()<100) {
@@ -136,64 +143,78 @@ DataProvider* BrukerProvider::Factory::getProvider(QString filename, QObject *pa
     overflowTableSize = 16*overflowNumbers.at(0).toInt(&ok);
     if (!ok) return NULL;
   } else {
-    int twoByteOverflowCount = 0;
-    int fourByteOverflowCount = 0;
     if (overflowNumbers.size()!=3) return NULL;
     if (bytesPerPixel==1) {
-      twoByteOverflowCount = overflowNumbers.at(1).toInt(&ok);
+      overflowTableSize += padTo(2*overflowNumbers.at(1).toInt(&ok), 16);
       if (!ok) return NULL;
     }
     if (bytesPerPixel<=2) {
-      fourByteOverflowCount = overflowNumbers.at(2).toInt(&ok);
+      overflowTableSize += padTo(4*overflowNumbers.at(2).toInt(&ok), 16);
       if (!ok) return NULL;
     }
-    overflowTableSize  = padTo(2*twoByteOverflowCount, 16);
-    overflowTableSize += padTo(4*fourByteOverflowCount, 16);
   }
 
+  // check is filesize matches calculated size
   if ((headerSize+dataSize+underflowTableSize+overflowTableSize)!=imgFile.size())
     return NULL;
 
-
+  // Read pixel data
   QVector<unsigned int> pixelData;
   imgFile.seek(headerSize);
   pixelData = readArrayFromSfrm(imgFile, rows*cols, bytesPerPixel);
 
+  // TODO: Remove debug stuff
+  int zeroCount = 0;
+  int maxCount = 0;
+  foreach(unsigned int n, pixelData) {
+    if (n==0) {
+      zeroCount++;
+    } else if (n==0xFF) {
+      maxCount++;
+    }
+  }
+  qDebug() << "zeroMax: " << zeroCount << " " << maxCount;
+
   //TODO: check underflowdata
   if (headerData["FORMAT"].toInt()<100) {
-    // TODO implementold overflow format
+    // TODO implement old overflow format
   } else {
-    int twoByteOverflowCount = overflowNumbers.at(1).toInt();
-    int fourByteOverflowCount = overflowNumbers.at(2).toInt();
-    QVector<unsigned int> overflowData;
-    int sigVal;
-    if (bytesPerPixel==1) {
-      sigVal = 0xFF;
-      imgFile.seek(headerSize+dataSize+underflowTableSize);
-      overflowData = readArrayFromSfrm(imgFile, twoByteOverflowCount, 2);
+    // Read underflow table
+    imgFile.seek(headerSize+dataSize);
+    QList<unsigned int> underflowData = readArrayFromSfrm(imgFile, qMax(0, numberUnderflow), bytesPerUnderflow).toList();
+    int baselineOffset = numberUnderflow>=0 ? headerData["NEXP"].toString().split(' ').at(2).toInt(&ok) : 0;
+    if (!ok) return NULL;
 
-      QVector<unsigned int> fourByteOverflowData;
-      imgFile.seek(headerSize+dataSize+underflowTableSize+padTo(2*twoByteOverflowCount, 16));
-      fourByteOverflowData = readArrayFromSfrm(imgFile, fourByteOverflowCount, 4);
-      int i=0;
-      for (int n=0; n<overflowData.size(); n++) {
-        if (overflowData.at(n)==0xFFFF) {
-          overflowData[n]=fourByteOverflowData.at(i++);
+    // Read overflow tables (up to two)
+    int twoByteOverflowCount = overflowNumbers.at(1).toInt();
+    imgFile.seek(headerSize+dataSize+underflowTableSize);
+    QList<unsigned int> twoByteoverflowData = readArrayFromSfrm(imgFile, twoByteOverflowCount, 2).toList();
+
+    int fourByteOverflowCount = overflowNumbers.at(2).toInt();
+    imgFile.seek(headerSize+dataSize+underflowTableSize+padTo(2*twoByteOverflowCount, 16));
+    QList<unsigned int> fourByteOverflowData = readArrayFromSfrm(imgFile, fourByteOverflowCount, 4).toList();
+
+    // do set Under- and Overflow
+    for (int n=0; n<pixelData.size(); n++) {
+      int val = pixelData.at(n);
+      if (val==0) {
+        if (numberUnderflow>=0) {
+          if (underflowData.isEmpty()) return NULL;
+          val=underflowData.takeFirst();
+        }
+      } else {
+        if ((bytesPerPixel==1) && (val==0xFF)) {
+          if (twoByteoverflowData.isEmpty()) return NULL;
+          val=twoByteoverflowData.takeFirst();
+        }
+        if ((bytesPerPixel<=2) && (val==0xFFFF)) {
+          if (fourByteOverflowData.isEmpty()) return NULL;
+          val=fourByteOverflowData.takeFirst();
         }
       }
-      qDebug() << i << " " << fourByteOverflowCount;
-    } else if (bytesPerPixel==2) {
-      sigVal = 0xFFFF;
-      imgFile.seek(headerSize+dataSize+underflowTableSize);
-      overflowData = readArrayFromSfrm(imgFile, fourByteOverflowCount, 4);
+      pixelData[n] = val + baselineOffset;
     }
-    int i=0;
-    for (int n=0; n<pixelData.size(); n++) {
-      if (pixelData.at(n)==sigVal) {
-        pixelData[n]=overflowData.at(i++);
-      }
-    }
-    qDebug() << i << " " << twoByteOverflowCount;
+    qDebug() << "Size of tables" << underflowData.size() << twoByteoverflowData.size() << fourByteOverflowData.size();
   }
 
 
