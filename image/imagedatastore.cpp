@@ -7,6 +7,7 @@ ImageDataStore::ImageDataStore(QObject *parent) :
 
 
 bool ImageDataStore::hasData(DataType d) const {
+  bool b = dataStore.contains(d);
   return dataStore.contains(d);
 }
 

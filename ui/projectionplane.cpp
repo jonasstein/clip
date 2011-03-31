@@ -413,7 +413,7 @@ void ProjectionPlane::on_actionCrop_triggered() {
 void ProjectionPlane::imageLoaded(LaueImage *img) {
   setWindowTitle(projector->displayName()+": "+img->name());
   ui->imgToolBar->setVisible(true);
-  ui->rulerAction->setVisible(!projector->getLaueImage()->data()->hasData(ImageDataStore::AbsoluteWidth));
+  ui->rulerAction->setVisible(!projector->getLaueImage()->data()->hasData(ImageDataStore::PhysicalWidth));
   resizeView();
 }
 

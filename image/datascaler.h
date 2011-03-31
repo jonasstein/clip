@@ -34,7 +34,6 @@ public slots:
   virtual QList<QWidget*> toolboxPages();
 protected:
   QTransform initialTransform();
-  QSizeF transformSize(const QSizeF&);
   virtual void redrawCache();
   virtual QRgb getRGB(const QPointF&)=0;
 

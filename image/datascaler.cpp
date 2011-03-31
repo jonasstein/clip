@@ -32,12 +32,6 @@ DataScaler::~DataScaler() {
 
 
 QTransform DataScaler::initialTransform() {
-  /*QPolygonF poly(QRectF(QPointF(0,0), QSizeF(provider->size())));
-  poly.pop_back();
-  QTransform t;
-  QTransform::squareToQuad(poly, t);
-  QTransform flipY (1,0,0,-1,0,1);
-  return flipY * t;*/
   QSize s = provider->size();
   return QTransform(s.width(), 0, 0, -s.height(), 0, s.height());
 }
@@ -52,16 +46,6 @@ void DataScaler::addTransform(const QTransform & t) {
   if (cache)
     redrawCache();
   emit imageContentsChanged();
-}
-
-QSizeF DataScaler::transformSize(const QSizeF &s) {
-  QTransform T = sqareToRaw*initialTransform().inverted();
-  QPointF center = T.map(QPointF(0,0));
-  QPointF ex = T.map(QPointF(1,0));
-  QPointF ey = T.map(QPointF(0,1));
-  double w = fasthypot((ex.x()-center.x())*s.width(), (ex.y()-center.y())*s.height());
-  double h = fasthypot((ey.x()-center.x())*s.width(), (ey.y()-center.y())*s.height());
-  return QSizeF(w,h);
 }
 
 void DataScaler::updateContrastMapping() {

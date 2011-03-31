@@ -57,8 +57,8 @@ public slots:
   void setYOffset(double);
   virtual void decorateScene();
   void resizePBMarker();
-  void movedPBMarker();
-  void updatePBPos();
+  void movedPrimaryBeamMarker();
+  void updatePrimaryBeamPos();
   virtual void doImgRotation(const QTransform& t);
   virtual void loadParmetersFromImage(LaueImage*);
   virtual void saveParametersAsDefault();

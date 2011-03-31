@@ -13,8 +13,6 @@ public:
     PhysicalHeight,
     Width,
     Height,
-    AbsoluteWidth,
-    AbsoluteHeight,
     PlaneDetectorToSampleDistance
   };
   explicit ImageDataStore(QObject *parent = 0);

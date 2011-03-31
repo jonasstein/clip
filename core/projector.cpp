@@ -599,7 +599,7 @@ void Projector::showCropMarker() {
 void Projector::delCropMarker() {
   if (!cropMarker.isNull()) {
     scene.removeItem(cropMarker);
-    delete cropMarker;
+    cropMarker.data()->deleteLater();
   }
 }
 
@@ -608,7 +608,8 @@ void Projector::setCrop(QPolygonF rect) {
   if (QTransform::quadToSquare(det2img.map(rect), t)) {
     doImgRotation(t);
   }
-  delCropMarker();
+  //delCropMarker();
+  QTimer::singleShot(500, this, SLOT(delCropMarker()));
 }
 
 CropMarker* Projector::getCropMarker() {
@@ -616,6 +617,7 @@ CropMarker* Projector::getCropMarker() {
 }
 
 void Projector::updateImgTransformations() {
+  qDebug() << "updateImageTransform()";
   const QRectF r=scene.sceneRect();
   det2img.reset();
   if (r.isEmpty()) {
@@ -662,6 +664,8 @@ void Projector::closeImage() {
 
 // Rotates and flips the Decorations, which are bound to the Image
 void Projector::doImgRotation(const QTransform& t) {
+  qDebug() << "Projector::doImgRotation() begin";
+
   foreach (QGraphicsItem* item, imageItemsPlane->childItems()) {
     if (dynamic_cast<PropagatingGraphicsObject*>(item)) {
       dynamic_cast<PropagatingGraphicsObject*>(item)->setImgTransform(t);
@@ -671,6 +675,7 @@ void Projector::doImgRotation(const QTransform& t) {
   }
   if (imageData)
     imageData->addTransform(t.inverted());
+  qDebug() << "Projector::doImgRotation() end";
 }
 
 
