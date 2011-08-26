@@ -87,6 +87,6 @@ typedef TVec3D<double> Vec3D;
 
 
 
-#include <tools/vec3d.cpp>
+#include <tools/vec3D.cpp>
 
 #endif
