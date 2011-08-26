@@ -38,6 +38,8 @@ public:
     DataProvider* getProvider(QString, ImageDataStore*, QObject* = 0);
   };
 
+  static const char Info_Format[];
+
   virtual ~BrukerProvider();
 
   virtual const void* getData();
