@@ -22,7 +22,7 @@
 
 
 #include <cmath>
- 
+
 #include <QTime>
 #include <QMetaObject>
 #include <QtConcurrentMap>
@@ -98,16 +98,29 @@ const char Crystal::Settings_EulerPhi[] = "EulerPhi";
 
 
 Crystal::Crystal(QObject* _parent):
-    FitObject(_parent),
-    MReal(),
-    MReziprocal(),
-    MRot(),
-    connectedProjectors(this),
-    rotationAxis(1,0,0),
-    spaceGroup(this),
-    reflections(),
-    cellGroup(this),
-    orientationGroup(this)
+  FitObject(_parent),
+  MReal(),
+  MReziprocal(),
+  MRot(),
+  astar(),
+  bstar(),
+  cstar(),
+  a(0), b(0), c(0), alpha(0), beta(0), gamma(0),
+  Qmin(0), Qmax(1),
+  connectedProjectors(this),
+  rotationAxis(1,0,0),
+  axisType(LabSystem),
+  spaceGroup(this),
+  reflections(),
+  reflectionFuture(),
+  restartReflectionUpdate(false),
+  immediateRotationUpdate(false),
+  predictionFactor(1.0),
+  updateEnabled(true),
+  updateIsSynchron(true),
+  reflectionsUpdater(new ThreadRunner),
+  cellGroup(this),
+  orientationGroup(this)
 {
   QSettings settings;
   settings.beginGroup(Settings_Group);
@@ -124,9 +137,6 @@ Crystal::Crystal(QObject* _parent):
 
   settings.endGroup();
 
-  Qmin=0.0;
-  Qmax=1.0;
-  predictionFactor = 1.0;
   connect(&connectedProjectors, SIGNAL(objectAdded()), this, SLOT(updateWavevectorsFromProjectors()));
   connect(&connectedProjectors, SIGNAL(objectRemoved()), this, SLOT(updateWavevectorsFromProjectors()));
   connect(&spaceGroup, SIGNAL(constrainsChanged()), this, SLOT(slotSetSGConstrains()));
@@ -134,13 +144,9 @@ Crystal::Crystal(QObject* _parent):
   connect(&spaceGroup, SIGNAL(triclinRtoH()), this, SLOT(convertRtoH()));
   connect(&spaceGroup, SIGNAL(groupChanged()),this, SLOT(generateReflections()));
   connect(&reflectionFuture, SIGNAL(finished()), this, SLOT(reflectionGenerated()));
-  axisType=LabSystem;
   enableUpdate();
   synchronUpdate();
-  restartReflectionUpdate = false;
   generateReflections();
-
-  reflectionsUpdater = new ThreadRunner;
 
   addParameterGroup(&cellGroup);
   addParameterGroup(&orientationGroup);
@@ -416,10 +422,10 @@ void Crystal::UpdateRef::operator()(Reflection &r) const {
 }
 
 Crystal::UpdateLoadBalancer::UpdateLoadBalancer(Reflection* _d, int _size, const UpdateRef &_u):
-    d(_d),
-    size(_size),
-    u(_u),
-    wp(0)
+  d(_d),
+  size(_size),
+  u(_u),
+  wp(0)
 {
   chunkSize = std::max(size/16, 1);
 }
@@ -776,8 +782,8 @@ bool Crystal::loadFromXML(QDomElement base) {
 
 
 Crystal::CellGroup::CellGroup(Crystal* c):
-    FitParameterGroup(c),
-    crystal(c)
+  FitParameterGroup(c),
+  crystal(c)
 {
   addParameter("a");
   addParameter("b");
@@ -859,8 +865,8 @@ void Crystal::CellGroup::notifySetChangeable(int member, bool b) {
 }
 
 Crystal::OrientationGroup::OrientationGroup(Crystal* c):
-    FitParameterGroup(c),
-    crystal(c)
+  FitParameterGroup(c),
+  crystal(c)
 {
   omega = chi = phi = 0.0;
   addParameter("omega", true);

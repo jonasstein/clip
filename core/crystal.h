@@ -122,12 +122,6 @@ public slots:
   void slotSetSGConstrains();
   void generateReflections();
   void saveParametersAsDefault();
-
-  //TODO: Remove
-  void enableDebug(bool b);
-  void debugSlot();
-private:
-  bool debugEnabled;
 private slots:
   void convertHtoR();
   void convertRtoH();
@@ -253,6 +247,14 @@ private:
   CellGroup cellGroup;
   OrientationGroup orientationGroup;
 
+#ifdef __DEBUG__
+public slots:
+  //TODO: Remove
+  void enableDebug(bool b);
+  void debugSlot();
+private:
+  bool debugEnabled;
+#endif
 };
 
 //struct CrystalPointer {

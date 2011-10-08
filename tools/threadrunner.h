@@ -27,7 +27,7 @@
 #include <vector>
 #include <thread>
 
-#define USE_QTHREADS 1
+#define USE_QTHREADS 0
 #define USE_SEMAPHORE_SYNC 1
 
 #if USE_QTHREADS

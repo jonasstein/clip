@@ -61,6 +61,11 @@ Clip::Clip(QWidget *_parent) :
   connect(ui->menuWindows, SIGNAL(aboutToShow()), this, SLOT(slotUpdateWindowMenu()));
   connect(ui->mdiArea, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SIGNAL(windowChanged()));
 
+#ifdef __DEBUG__
+  QAction* a = ui->menuHelp->addAction("Debug");
+  a->setCheckable(true);
+  a->setChecked(false);
+#endif
   QDesktopServices::setUrlHandler("call", this, "showSEE");
 
   QTimer::singleShot(0, this, SLOT(loadInitialWorkspace()));
@@ -341,8 +346,14 @@ bool Clip::loadWorkspaceFile(QString filename) {
     if (e.isNull()) continue;
     CrystalDisplay* crystalDisplay = new CrystalDisplay();
     addMdiWindow(crystalDisplay)->systemMenu()->addAction("Save as Default", crystalDisplay->getCrystal(), SLOT(saveParametersAsDefault()));
+#ifdef __DEBUG__
     //TODO: Remove
-    connect(ui->actionDebug, SIGNAL(triggered(bool)), crystalDisplay->getCrystal(), SLOT(enableDebug(bool)));
+    foreach (QAction* a, ui->menuHelp->actions()) {
+      if (a->text()=="Debug")
+        connect(a, SIGNAL(triggered(bool)), crystalDisplay->getCrystal(), SLOT(enableDebug(bool)));
+    }
+
+#endif
     crystalDisplay->loadFromXML(e);
     e = crystalConnection.elementsByTagName(XML_Clip_ConnectedProjectors).at(0).toElement();
     for (e=e.firstChildElement(); !e.isNull(); e=e.nextSiblingElement()) {
